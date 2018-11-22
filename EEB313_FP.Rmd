@@ -1,0 +1,196 @@
+---
+title: "EEB313 - Final Project"
+output: html_notebook
+---
+#Needed Packages
+
+```{r}
+#Packages needed
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(MuMIn)
+library(car)
+library(psych)
+library(multcomp)
+library(EcoSimR)
+library(reshape2)
+```
+
+```{r}
+Bruce <- read.csv('Bruce_Peninsula_NP_Eastern_Red-Backed_Salamander_2004-2017_data_23-02-2018.csv')
+```
+
+#Data Wrangling and Summarising
+
+```{r}
+#getting rid of French explanation of column titles
+Bruce <- Bruce[-1, ]
+```
+```{r}
+#changing counts to numnerics so it is easier to work with
+Bruce$Eastern.Redback.Salamander.Count <- as.numeric(Bruce$Eastern.Redback.Salamander.Count)
+Bruce$Leadback.form.of.Eastern.Redback.Salamander.Count <- as.numeric(Bruce$Leadback.form.of.Eastern.Redback.Salamander.Count)
+Bruce$Redback.form.of.Eastern.Redback.Salamander.Count <- as.numeric(Bruce$Redback.form.of.Eastern.Redback.Salamander.Count)
+
+#showing the abundance of salamanders by year
+Bruce %>% 
+  group_by(Year) %>% 
+  summarise(count = sum(Eastern.Redback.Salamander.Count))
+```
+```{r}
+#Average Air Temperature by year by Plot
+Bruce$Air.Temperature...C. <- as.numeric(Bruce$Air.Temperature...C.)
+Bruce %>%
+  filter(!is.na(Air.Temperature...C.)) %>% 
+  group_by(Year, Plot.Name) %>% 
+  summarise(avg.air.temp = mean(Air.Temperature...C.))
+```
+```{r}
+#Average Soil Temperature by year by Plot
+Bruce$Soil.Temperature...C. <- as.numeric(Bruce$Soil.Temperature...C.)
+Bruce %>% 
+  filter(!is.na(Soil.Temperature...C.)) %>% 
+  group_by(Year, Plot.Name) %>% 
+  summarise(avg.soil.temp = mean(Soil.Temperature...C.))
+```
+```{r}
+#making the data easy to work with
+Bruce$Precipitation.in.the.Last.24.hours..mm.<- as.numeric(Bruce$Precipitation.in.the.Last.24.hours..mm.)
+Bruce$Beaufort.Sky.Class <- as.numeric(Bruce$Beaufort.Sky.Class)
+Bruce$Beaufort.Wind.Class <- as.numeric(Bruce$Beaufort.Wind.Class)
+Bruce$Soil.Moisture <- as.numeric(Bruce$Soil.Moisture)
+Bruce$Soil.pH <- as.numeric(Bruce$Soil.pH)
+```
+
+```{r}
+Bruce.summarised <- Bruce %>% 
+  group_by(Year, Plot.Name) %>% 
+  summarise(Salamander.pop = sum(Eastern.Redback.Salamander.Count),
+            avg.air.temp = mean(Air.Temperature...C.),
+            avg.soil.temp = mean(Soil.Temperature...C.),
+            avg.prec.24h = mean(Precipitation.in.the.Last.24.hours..mm.),
+            avg.soil.moisture = mean(Soil.Moisture),
+            avg.soil.pH = mean(Soil.pH))
+
+Bruce.summarised
+```
+
+```{r}
+Bruce.summarised$Year <- as.numeric(as.character(Bruce.summarised$Year))
+Bruce.summarised %>%
+  group_by(Plot.Name) %>% 
+  ggplot(aes(x = Year, y = Salamander.pop, color = Plot.Name)) +
+  geom_point() +
+  facet_wrap(~ Plot.Name) +
+  geom_smooth(method = "lm") +
+  theme(legend.position = 'none') +
+  ylab("Salamander Population") +
+  ggtitle("Salamander Abundance: Plot Locations by Year")
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+Bruce.summarised %>%
+  ggplot(aes(x = Year, y = Salamander.pop, fill = Plot.Name)) +
+  geom_area() +
+  ylab("Salamander Population") +
+  ggtitle("Salamander Abundance on the Bruce Peninsula") +
+  scale_fill_discrete(name = "Plot Name") +
+  theme_minimal()
+```
+
+#Model Selection for Bruce
+
+```{r}
+#Saturated Model
+saturated_bruce <- lmer(Salamander.pop ~ avg.air.temp+avg.soil.temp+avg.prec.24h+avg.soil.moisture+avg.soil.pH + (1|Plot.Name), REML = TRUE, data = Bruce.summarised)
+summary(saturated_bruce)
+```
+
+```{r}
+options(na.action = 'na.fail')
+Bruce_dredge <- dredge(saturated_bruce, beta = F, evaluate = T, rank = AICc)
+options(na.action = 'na.omit')
+head(Bruce_dredge)
+nrow(Bruce_dredge)
+```
+```{r}
+summary(model.avg(Bruce_dredge, subset = delta <= 2))
+```
+```{r}
+top_bruce <- get.models(Bruce_dredge, subset = 1)[[1]]
+top_bruce
+```
+
+```{r}
+ggplot(Bruce.summarised, aes(x = Year, y = Salamander.pop, color = Plot.Name)) +
+  geom_point(size = 3) +
+  geom_line(aes(y = predict(top_bruce)), size = 1)
+```
+
+```{r}
+Bruce_byyear <- Bruce.summarised %>% 
+  group_by(Year) %>% 
+  summarise(Population = mean(Salamander.pop),
+            Average.Air.Temp = mean(avg.air.temp),
+            Average.Soil.Temp = mean(avg.soil.temp),
+            Average.Precip.24 = mean(avg.prec.24h),
+            Average.Soil.Moist = mean(avg.soil.moisture),
+            Average.Soil.pH = mean(avg.soil.pH))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
