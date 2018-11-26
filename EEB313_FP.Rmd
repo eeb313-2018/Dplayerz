@@ -66,13 +66,12 @@ Bruce$Soil.pH <- as.numeric(Bruce$Soil.pH)
 ```{r}
 Bruce.summarised <- Bruce %>% 
   group_by(Year, Plot.Name) %>% 
-  summarise(Salamander.pop = sum(Eastern.Redback.Salamander.Count),
+  summarise(count = sum(Eastern.Redback.Salamander.Count)
             avg.air.temp = mean(Air.Temperature...C.),
             avg.soil.temp = mean(Soil.Temperature...C.),
             avg.prec.24h = mean(Precipitation.in.the.Last.24.hours..mm.),
             avg.soil.moisture = mean(Soil.Moisture),
             avg.soil.pH = mean(Soil.pH))
-
 Bruce.summarised
 ```
 
