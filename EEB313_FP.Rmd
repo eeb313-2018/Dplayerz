@@ -64,19 +64,24 @@ Bruce$Soil.pH <- as.numeric(Bruce$Soil.pH)
 ```
 
 ```{r}
+#averaging the environmental effects over each year, grouped by plot
 Bruce.summarised <- Bruce %>% 
   group_by(Year, Plot.Name) %>% 
-  summarise(count = sum(Eastern.Redback.Salamander.Count)
+  summarise(Salamander.pop = sum(Eastern.Redback.Salamander.Count),
             avg.air.temp = mean(Air.Temperature...C.),
             avg.soil.temp = mean(Soil.Temperature...C.),
             avg.prec.24h = mean(Precipitation.in.the.Last.24.hours..mm.),
             avg.soil.moisture = mean(Soil.Moisture),
             avg.soil.pH = mean(Soil.pH))
+
 Bruce.summarised
 ```
 
 ```{r}
+#making Year easier to work with
 Bruce.summarised$Year <- as.numeric(as.character(Bruce.summarised$Year))
+
+#creating a plot for salamander abundance over time, grouped by plot
 Bruce.summarised %>%
   group_by(Plot.Name) %>% 
   ggplot(aes(x = Year, y = Salamander.pop, color = Plot.Name)) +
@@ -99,6 +104,191 @@ Bruce.summarised %>%
   theme_minimal()
 ```
 
+#Linear Model Plots for different Environmental Factors
+
+```{r}
+#model for avg soil pH and year
+ Bruce.summarised %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(x=Year, y= avg.soil.pH, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~Plot.Name) +
+  ylab("Average Soil pH") +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "none") +
+  ggtitle("Soil pH of Bruce Peninsula : 2003 - 2017")
+```
+
+```{r}
+#model for avg soil moisture and year
+ Bruce.summarised %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(x=Year, y= avg.soil.moisture, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~Plot.Name) + 
+  ylab("Average Soil Moisture(%)") +
+  ylim(0, 30) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "none") +
+  ggtitle("Soil Mosture of Bruce Peninsula : 2003 - 2017")
+```
+
+```{r}
+#model for avg precipitation and year
+ Bruce.summarised %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(x=Year, y= avg.prec.24h, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~Plot.Name) + 
+  ylab("Average Precipitation: 24h (mm)") +
+  ylim(0, 20) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "none") +
+  ggtitle("Average Precipitation in last 24h of Bruce Peninsula : 2003 - 2017")
+```
+
+```{r}
+#model for air temp and year
+Bruce.summarised %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(x=Year, y= avg.air.temp, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~Plot.Name) + 
+  ylab("Average Air Temperature (F)") +
+  ylim(0, 110) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "none") +
+  ggtitle("Air Temperature of Bruce Peninsula : 2003 - 2017")
+```
+ 
+```{r}
+#model for soil temp and year
+Bruce.summarised %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(x=Year, y= avg.soil.temp, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~Plot.Name) + 
+  ylim(0, 100) +
+  ylab("Average Soil Temperature (F)") +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "none") +
+  ggtitle("Soil Temperature of Bruce Peninsula : 2003 - 2017")
+```
+
+#Linear Models of Abundance vs. Environmental Factors
+
+```{r}
+# linear mdoel explaining count and soil temp
+summary(lm(Salamander.pop ~ avg.soil.temp, data = Bruce.summarised))
+```
+ 
+```{r}
+# linear model explaining count and soil pH
+summary(lm(Salamander.pop ~ avg.soil.pH, data = Bruce.summarised))
+```
+ 
+```{r}
+#linear model explaining count and Air temperature
+summary(lm(Salamander.pop ~ avg.air.temp, data = Bruce.summarised))
+```
+
+```{r}
+# linear model explaining count and Soil Moisture
+summary(lm(Salamander.pop ~ avg.soil.moisture, data = Bruce.summarised))
+```
+
+```{r}
+# linear model explaining count and Precipitation
+summary(lm(Salamander.pop ~ avg.prec.24h, data = Bruce.summarised))
+```
+
+#Plots for Environmental Factors vs. Abundance
+
+```{r}
+#Soil Temperature vs. Abundance
+Bruce.summarised %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(y=Salamander.pop, x= avg.soil.temp, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~Plot.Name) + 
+  xlab("Average Soil Temperature (F)") +
+  ylab("Salamander Population Size") +
+  ylim(0, 600) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "none") +
+  ggtitle("Soil Temperature vs. Salamander Abundance")
+```
+
+```{r}
+#Soil Moisture vs. Abundance
+Bruce.summarised %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(y=Salamander.pop, x= avg.soil.moisture, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~Plot.Name) + 
+  xlab("Average Soil Moisture (%)") +
+  ylab("Salamander Population Size") +
+  ylim(0, 600) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "none") +
+  ggtitle("Soil Moisture vs. Salamander Abundance")
+```
+
+```{r}
+#Soil pH vs. Abundance
+Bruce.summarised %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(y=Salamander.pop, x= avg.soil.pH, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~Plot.Name) + 
+  xlab("Average Soil pH") +
+  ylab("Salamander Population Size") +
+  ylim(0, 600) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "none") +
+  ggtitle("Soil pH vs. Salamander Abundance")
+```
+
+```{r}
+#Air Temperature vs. Abundance
+Bruce.summarised %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(y=Salamander.pop, x= avg.air.temp, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~Plot.Name) + 
+  xlab("Average Air Temperature (F)") +
+  ylab("Salamander Population Size") +
+  ylim(0, 600) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "none") +
+  ggtitle("Air Temperature vs. Salamander Abundance")
+```
+
+```{r}
+#Precipitation vs. Abundance
+Bruce.summarised %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(y=Salamander.pop, x= avg.prec.24h, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~Plot.Name) + 
+  xlab("Average Precipitation in last 24h (mm)") +
+  ylab("Salamander Population Size") +
+  ylim(0, 600) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.position = "none") +
+  ggtitle("Precipitation vs. Salamander Abundance")
+```
+
 #Model Selection for Bruce
 
 ```{r}
@@ -108,6 +298,7 @@ summary(saturated_bruce)
 ```
 
 ```{r}
+#compiling a list of potential 'best' models
 options(na.action = 'na.fail')
 Bruce_dredge <- dredge(saturated_bruce, beta = F, evaluate = T, rank = AICc)
 options(na.action = 'na.omit')
@@ -115,11 +306,18 @@ head(Bruce_dredge)
 nrow(Bruce_dredge)
 ```
 ```{r}
+#extracting all relevant models from the dredge
 summary(model.avg(Bruce_dredge, subset = delta <= 2))
 ```
 ```{r}
+#observing the top model
 top_bruce <- get.models(Bruce_dredge, subset = 1)[[1]]
-top_bruce
+summary(top_bruce)
+```
+
+```{r}
+#finding R squared for the top model
+r.squaredGLMM(top_bruce)
 ```
 
 ```{r}
@@ -127,69 +325,3 @@ ggplot(Bruce.summarised, aes(x = Year, y = Salamander.pop, color = Plot.Name)) +
   geom_point(size = 3) +
   geom_line(aes(y = predict(top_bruce)), size = 1)
 ```
-
-```{r}
-Bruce_byyear <- Bruce.summarised %>% 
-  group_by(Year) %>% 
-  summarise(Population = mean(Salamander.pop),
-            Average.Air.Temp = mean(avg.air.temp),
-            Average.Soil.Temp = mean(avg.soil.temp),
-            Average.Precip.24 = mean(avg.prec.24h),
-            Average.Soil.Moist = mean(avg.soil.moisture),
-            Average.Soil.pH = mean(avg.soil.pH))
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
