@@ -1,0 +1,183 @@
+---
+title: "EEB313 - Final Project"
+output: html_notebook
+---
+```{r}
+#Packages needed
+library(tidyverse)
+setwd("~/Desktop/DPlayerz")
+Bruce <- read.csv('bruce.csv')
+
+View(Bruce)
+```
+
+
+```{r}
+#getting rid of French explanation of column titles
+Bruce <- Bruce[-1, ]
+```
+```{r}
+#changing counts to numnerics so it is easier to work with
+Bruce$Eastern.Redback.Salamander.Count <- as.numeric(Bruce$Eastern.Redback.Salamander.Count)
+Bruce$Leadback.form.of.Eastern.Redback.Salamander.Count <- as.numeric(Bruce$Leadback.form.of.Eastern.Redback.Salamander.Count)
+Bruce$Redback.form.of.Eastern.Redback.Salamander.Count <- as.numeric(Bruce$Redback.form.of.Eastern.Redback.Salamander.Count)
+#showing the abundance of salamanders by year
+Bruce %>% 
+  group_by(Year) %>% 
+  summarise(count = sum(Eastern.Redback.Salamander.Count))
+```
+```{r}
+#Average Air Temperature by year by Plot
+Bruce$Air.Temperature..C. <- as.numeric(Bruce$Air.Temperature..C.)
+Bruce %>%
+  filter(!is.na(Air.Temperature..C.)) %>% 
+  group_by(Year, Plot.Name) %>% 
+  summarise(avg.air.temp = mean(Air.Temperature..C.))
+```
+```{r}
+#Average Soil Temperature by year by Plot
+Bruce$Soil.Temperature..C. <- as.numeric(Bruce$Soil.Temperature..C.)
+Bruce %>% 
+  filter(!is.na(Soil.Temperature..C.)) %>% 
+  group_by(Year, Plot.Name) %>% 
+  summarise(avg.soil.temp = mean(Soil.Temperature..C.))
+```
+```{r}
+#making the data easy to work with
+Bruce$Precipitation.in.the.Last.24.hours..mm.<- as.numeric(Bruce$Precipitation.in.the.Last.24.hours..mm.)
+Bruce$Beaufort.Sky.Class <- as.numeric(Bruce$Beaufort.Sky.Class)
+Bruce$Beaufort.Wind.Class <- as.numeric(Bruce$Beaufort.Wind.Class)
+Bruce$Soil.Moisture <- as.numeric(Bruce$Soil.Moisture)
+Bruce$Soil.pH <- as.numeric(Bruce$Soil.pH)
+```
+
+```{r}
+Avg.Bruce <-Bruce %>% 
+  group_by(Year, Plot.Name) %>% 
+  summarise(count = sum(Eastern.Redback.Salamander.Count),
+            avg.air.temp = mean(Air.Temperature..C.),
+            avg.soil.temp = mean(Soil.Temperature..C.),
+            avg.prec.24h = mean(Precipitation.in.the.Last.24.hours..mm.),
+            avg.soil.moisture = mean(Soil.Moisture),
+            avg.soil.pH = mean(Soil.pH))
+```
+
+```{r}
+# Year and count Comparison
+B1 <- Avg.Bruce %>% 
+  group_by(Year, Plot.Name)
+
+LM1.1 <- lm(count ~ Year, data = B1)
+
+LM1.1
+
+ 
+
+```
+
+```{r}
+# linear mdoel explaining count and soil temp
+
+B2 <- Bruce %>% 
+  group_by(Year, Soil.Temperature..C.) %>%
+  summarise(count = sum(Eastern.Redback.Salamander.Count)) 
+
+lm(count ~ Soil.Temperature..C., data = B2)
+anova(lm(count ~ Soil.Temperature..C., data = B2))
+
+
+
+```
+
+```{r}
+# linear model explaining count and soil pH
+B3 <- Bruce %>% 
+  group_by(Year, Soil.pH) %>% 
+  summarise(count = sum(Eastern.Redback.Salamander.Count))
+
+lm(count ~ Soil.pH, data = B3)
+anova(lm(count ~ Soil.pH, data = B3))
+
+
+```
+
+```{r}
+#linear model explaining count and Air temperature
+B4 <- Bruce %>% 
+  group_by(Year, Air.Temperature..C.) %>% 
+  summarise(count = sum(Eastern.Redback.Salamander.Count))
+
+lm(count ~ Air.Temperature..C., data = B4)
+anova(lm(count ~ Air.Temperature..C., data = B4))
+
+```
+
+```{r}
+View(Avg.Bruce)
+
+```
+
+
+
+
+```{r}
+#model for avg soil pH and year
+
+Avg.Bruce %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(x=Year, y= avg.soil.pH, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth() +
+  facet_wrap(~Plot.Name)
+
+```
+
+```{r}
+#model for avg soil moisture and year
+
+Avg.Bruce %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(x=Year, y= avg.soil.moisture, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth() +
+  facet_wrap(~Plot.Name)
+```
+
+
+
+```{r}
+#model for avg precipitation and year
+
+Avg.Bruce %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(x=Year, y= avg.prec.24h, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth() +
+  facet_wrap(~Plot.Name)
+
+```
+
+
+
+
+
+
+```{r}
+#model for air temp and year
+Avg.Bruce %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(x=Year, y= avg.air.temp, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth() +
+  facet_wrap(~Plot.Name)
+
+```
+```{r}
+#model for soil temp and year
+Avg.Bruce %>% 
+  group_by(Year, Plot.Name) %>% 
+  ggplot(aes(x=Year, y= avg.soil.temp, color = Plot.Name)) + 
+  geom_point() + 
+  geom_smooth() +
+  facet_wrap(~Plot.Name)
+```
